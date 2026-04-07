@@ -10,7 +10,7 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 echo 'Cloning source code...'
-                git branch: 'main', url: '[github.com](https://github.com/YOUR_USERNAME/YOUR_REPO.git)'
+                git branch: 'main', url: '[github.com](https://github.com/Ritika168/jenkins-task.git)'
             }
         }
 
