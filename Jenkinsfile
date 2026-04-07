@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+        // Change these if you want different names for your image or container
         IMAGE_NAME = 'my-static-website'
         CONTAINER_NAME = 'website-container'
     }
@@ -9,45 +10,42 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                echo 'Cloning source code...'
-                git branch: 'main', url: '[github.com](https://github.com/Ritika168/jenkins-task.git)'
+                echo 'Cloning source code from GitHub...'
+                // Ensure the branch name matches your GitHub default (usually 'main')
+                git branch: 'main', url: 'https://github.com/Ritika168/jenkins-task.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo 'Building Docker image...'
-                sh 'docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .'
-                sh 'docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest'
+                echo "Building Docker image version ${env.BUILD_NUMBER}..."
+                // Using double quotes so Jenkins can inject the environment variables
+                sh "docker build -t ${env.IMAGE_NAME}:${env.BUILD_NUMBER} ."
+                sh "docker tag ${env.IMAGE_NAME}:${env.BUILD_NUMBER} ${env.IMAGE_NAME}:latest"
             }
         }
 
         stage('Deploy Container') {
             steps {
-                echo 'Deploying new container...'
-                sh '''
-                    # Stop and remove existing container if it exists
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm ${CONTAINER_NAME} || true
+                echo 'Deploying new container to Port 80...'
+                script {
+                    // Stop and remove the old container if it exists, ignore errors if it doesn't
+                    sh "docker stop ${env.CONTAINER_NAME} || true"
+                    sh "docker rm ${env.CONTAINER_NAME} || true"
 
-                    # Run new container
-                    docker run -d \
-                        --name ${CONTAINER_NAME} \
-                        -p 80:80 \
-                        ${IMAGE_NAME}:latest
-
-                    echo "Website deployed successfully!"
-                '''
+                    // Run the fresh container
+                    sh "docker run -d --name ${env.CONTAINER_NAME} -p 80:80 ${env.IMAGE_NAME}:latest"
+                }
             }
         }
     }
 
     post {
         success {
-            echo 'Pipeline completed successfully! Website is live.'
+            echo 'Pipeline completed successfully! Your website is now live.'
         }
         failure {
-            echo 'Pipeline failed. Check the logs above.'
+            echo 'Pipeline failed. Check the Console Output to see what went wrong.'
         }
     }
 }
